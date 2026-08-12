@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { RefreshCw } from "lucide-react";
 import { useImageProcessor } from "@/hooks/useImageProcessor";
 import { useFrameLoader } from "@/hooks/useFrameLoader";
 import { UploadZone } from "@/components/upload-zone";
@@ -70,7 +71,6 @@ export default function HomePage() {
       />
 
       <main className="relative flex-1 flex flex-col items-center justify-start px-4 py-8 md:py-12 max-w-lg mx-auto w-full">
-        {/* Header */}
         <BrandingHeader
           compact={showEditor || showResult}
           className={cn(
@@ -79,7 +79,6 @@ export default function HomePage() {
           )}
         />
 
-        {/* Hero text — only on empty state */}
         {showEmpty && (
           <div className="text-center mb-8 space-y-3 animate-in fade-in duration-500">
             <p className="text-xl md:text-2xl font-bold text-zinc-200 leading-snug">
@@ -109,9 +108,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Main content area */}
         <div className="w-full space-y-4">
-          {/* Empty / Upload */}
           {(showEmpty || showError) && (
             <div className="animate-in fade-in duration-300">
               <UploadZone
@@ -120,14 +117,28 @@ export default function HomePage() {
               />
 
               {showError && (
-                <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <div className="mt-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 space-y-3">
                   <StateMessage state={state} error={error} />
+                  <button
+                    onClick={resetAll}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2",
+                      "px-4 py-2.5 rounded-lg",
+                      "bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700",
+                      "text-sm text-zinc-300 font-medium",
+                      "transition-all duration-150",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    )}
+                    aria-label="Try again with a different photo"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Try Again
+                  </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Loading state */}
           {isLoading && (
             <div className="flex flex-col items-center gap-4 py-12 animate-in fade-in duration-300">
               <div className="relative w-16 h-16">
@@ -139,7 +150,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Editor */}
           {showEditor && sourceImage && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
               <div className="flex items-center justify-between">
@@ -148,7 +158,7 @@ export default function HomePage() {
                 </h2>
                 <button
                   onClick={resetAll}
-                  className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                  className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
                   aria-label="Start over"
                 >
                   Start over
@@ -173,7 +183,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Result */}
           {showResult && result && (
             <GenerationResult
               result={result}
@@ -182,7 +191,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Footer */}
         <footer className="mt-12 pb-6 text-center">
           <p className="text-xs text-zinc-700">
             Hacker House Goa 2026 •{" "}
