@@ -1,113 +1,195 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useEffect } from "react";
+import { useImageProcessor } from "@/hooks/useImageProcessor";
+import { useFrameLoader } from "@/hooks/useFrameLoader";
+import { UploadZone } from "@/components/upload-zone";
+import { ImageEditor } from "@/components/image-editor";
+import { GenerationResult } from "@/components/generation-result";
+import { GenerateButton } from "@/components/action-buttons";
+import { BrandingHeader, StateMessage } from "@/components/branding";
+import { cn } from "@/lib/utils";
+
+export default function HomePage() {
+  const {
+    state,
+    error,
+    sourceImage,
+    position,
+    setPosition,
+    result,
+    setFrameImage,
+    processFile,
+    generateImage,
+    resetAll,
+  } = useImageProcessor();
+
+  const { frameImage, frameLoaded } = useFrameLoader();
+
+  useEffect(() => {
+    if (frameLoaded) {
+      setFrameImage(frameImage);
+    }
+  }, [frameImage, frameLoaded, setFrameImage]);
+
+  const isLoading: boolean =
+    state === "uploading" ||
+    state === "heic-converting" ||
+    state === "generating";
+
+  const showEditor: boolean =
+    (state === "loaded" || state === "editing") && !!sourceImage;
+
+  const showResult: boolean = state === "generated" && !!result;
+
+  const showEmpty: boolean = state === "empty";
+
+  const showError: boolean =
+    state === "error" || state === "unsupported" || state === "oversized";
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <div className="min-h-svh bg-zinc-950 flex flex-col">
+      {/* Background texture */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-30"
+        style={{
+          backgroundImage: `radial-gradient(circle at 20% 20%, rgba(255,107,53,0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255,107,53,0.03) 0%, transparent 50%)`,
+        }}
+        aria-hidden="true"
+      />
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      {/* Grid dots pattern */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-10"
+        style={{
+          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+          backgroundSize: "32px 32px",
+        }}
+        aria-hidden="true"
+      />
+
+      <main className="relative flex-1 flex flex-col items-center justify-start px-4 py-8 md:py-12 max-w-lg mx-auto w-full">
+        {/* Header */}
+        <BrandingHeader
+          compact={showEditor || showResult}
+          className={cn(
+            "w-full mb-8",
+            (showEditor || showResult) && "mb-6"
+          )}
         />
-      </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        {/* Hero text — only on empty state */}
+        {showEmpty && (
+          <div className="text-center mb-8 space-y-3 animate-in fade-in duration-500">
+            <p className="text-xl md:text-2xl font-bold text-zinc-200 leading-snug">
+              Build your{" "}
+              <span className="text-orange-500">HH Goa</span> identity.
+            </p>
+            <p className="text-sm text-zinc-500 max-w-sm mx-auto leading-relaxed">
+              Upload a photo and get your branded Hacker House Goa 2026 profile
+              picture — ready to post on X.
+            </p>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+            <div className="flex flex-wrap gap-2 justify-center pt-2">
+              {[
+                "Instant generation",
+                "No signup",
+                "Mobile-friendly",
+                "Shareable PFP",
+              ].map((feat) => (
+                <span
+                  key={feat}
+                  className="px-3 py-1 text-xs rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500"
+                >
+                  {feat}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+        {/* Main content area */}
+        <div className="w-full space-y-4">
+          {/* Empty / Upload */}
+          {(showEmpty || showError) && (
+            <div className="animate-in fade-in duration-300">
+              <UploadZone
+                onFileSelected={processFile}
+                disabled={isLoading}
+              />
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
+              {showError && (
+                <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <StateMessage state={state} error={error} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {isLoading && (
+            <div className="flex flex-col items-center gap-4 py-12 animate-in fade-in duration-300">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-2 border-zinc-800" />
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-orange-500 animate-spin" />
+                <div className="absolute inset-2 rounded-full border-2 border-transparent border-t-orange-400 animate-spin [animation-direction:reverse] [animation-duration:1.2s]" />
+              </div>
+              <StateMessage state={state} error={error} />
+            </div>
+          )}
+
+          {/* Editor */}
+          {showEditor && sourceImage && (
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                  Position your photo
+                </h2>
+                <button
+                  onClick={resetAll}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                  aria-label="Start over"
+                >
+                  Start over
+                </button>
+              </div>
+
+              <ImageEditor
+                image={sourceImage}
+                position={position}
+                onPositionChange={setPosition}
+                frameImage={frameImage}
+              />
+
+              <GenerateButton
+                onClick={generateImage}
+                loading={state === "generating"}
+              />
+
+              <p className="text-xs text-zinc-600 text-center">
+                Drag to reposition • Pinch or scroll to zoom • 1080×1080 PNG output
+              </p>
+            </div>
+          )}
+
+          {/* Result */}
+          {showResult && result && (
+            <GenerationResult
+              result={result}
+              onCreateAnother={resetAll}
+            />
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-12 pb-6 text-center">
+          <p className="text-xs text-zinc-700">
+            Hacker House Goa 2026 •{" "}
+            <span className="text-orange-900">#FrameGoa</span>
           </p>
-        </a>
-      </div>
-    </main>
+        </footer>
+      </main>
+    </div>
   );
 }
