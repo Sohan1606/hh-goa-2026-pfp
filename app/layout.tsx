@@ -11,12 +11,11 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Allow user pinch-zoom on the page for accessibility.
-  // The editor canvas has touch-action: none so its pinch is still captured.
   themeColor: "#0a0a0a",
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hh-goa-2026-pfp.vercel.app"),
   title: "HH Goa 2026 PFP Generator",
   description:
     "Create your Hacker House Goa 2026 profile picture and share your builder identity. Upload a photo, get a branded PFP in seconds.",
