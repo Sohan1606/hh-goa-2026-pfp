@@ -1,43 +1,70 @@
-export const SHARE_TEXT = `Just made my Hacker House Goa 2026 PFP 🚀\nReady to build.\n#FrameGoa`;
+export const SHARE_TEXT_PFP = `Just made my Hacker House Goa 2026 PFP 🚀\nReady to build.\n#FrameInGoa #HHGoa26`;
 
+export function shareTextBuilder(name: string, stack: string): string {
+  return `Just locked in my HH Goa 2026 Builder ID 🌴⚡\n\nBuilder: ${name || "—"}\nStack: ${stack || "—"}\n\nBuild weird things. Ship fast. Bring them to Goa.\n\n#FrameInGoa #HHGoa26`;
+}
+
+export function shareTextTeam(names: string[]): string {
+  const list = names.filter((n) => n.trim()).map((n) => `- ${n}`).join("\n");
+  return `Team locked in for HH Goa 2026 🌴⚡\n\nBuilders:\n${list || "- —"}\n\n#FrameInGoa #HHGoa26`;
+}
+
+export async function shareGeneric(options: {
+  text: string;
+  blob?: Blob;
+  hostedUrl?: string;
+  filename?: string;
+  title?: string;
+}): Promise<{ method: "webshare" | "intent"; success: boolean }> {
+  const {
+    text,
+    blob,
+    hostedUrl,
+    filename = "hh-goa-2026.png",
+    title = "HH Goa 2026",
+  } = options;
+
+  if (blob && typeof navigator !== "undefined" && navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ title, text, files: [file] });
+        return { method: "webshare", success: true };
+      }
+    } catch (err) {
+      if ((err as Error).name === "AbortError") {
+        return { method: "webshare", success: true };
+      }
+    }
+  }
+
+  openXIntentWithText(text, hostedUrl);
+  return { method: "intent", success: true };
+}
+
+// Backward-compat wrapper used by the existing PFP result component
 export async function shareToX(options: {
   blob?: Blob;
   hostedUrl?: string;
   filename?: string;
 }): Promise<{ method: "webshare" | "intent"; success: boolean }> {
-  const { blob, hostedUrl, filename = "hh-goa-2026-pfp.png" } = options;
-
-  // Try Web Share API with the actual PNG file (best on mobile)
-  if (blob && typeof navigator !== "undefined" && navigator.share && navigator.canShare) {
-    try {
-      const file = new File([blob], filename, { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: "Hacker House Goa 2026 PFP",
-          text: SHARE_TEXT,
-          files: [file],
-        });
-        return { method: "webshare", success: true };
-      }
-    } catch (err) {
-      const name = (err as Error).name;
-      if (name === "AbortError") {
-        // User cancelled the share sheet — treat as success (no error UI)
-        return { method: "webshare", success: true };
-      }
-      // Fall through to intent fallback
-    }
-  }
-
-  // Fallback: open X compose window (image cannot be attached via web intent)
-  openXIntent(hostedUrl);
-  return { method: "intent", success: true };
+  return shareGeneric({
+    text: SHARE_TEXT_PFP,
+    blob: options.blob,
+    hostedUrl: options.hostedUrl,
+    filename: options.filename ?? "hh-goa-2026-pfp.png",
+    title: "Hacker House Goa 2026 PFP",
+  });
 }
 
 export function openXIntent(hostedUrl?: string): void {
-  const text = SHARE_TEXT + (hostedUrl ? `\n${hostedUrl}` : "");
-  const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-  window.open(xUrl, "_blank", "noopener,noreferrer");
+  openXIntentWithText(SHARE_TEXT_PFP, hostedUrl);
+}
+
+export function openXIntentWithText(text: string, hostedUrl?: string): void {
+  const full = text + (hostedUrl ? `\n${hostedUrl}` : "");
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(full)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {

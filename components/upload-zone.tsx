@@ -65,7 +65,7 @@ export function UploadZone({ onFileSelected, disabled }: UploadZoneProps) {
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
-      <input
+            <input
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
@@ -73,7 +73,6 @@ export function UploadZone({ onFileSelected, disabled }: UploadZoneProps) {
         className="sr-only"
         aria-hidden="true"
         disabled={disabled}
-        capture="environment"
       />
 
       <div className="flex flex-col items-center justify-center gap-6 px-8 py-16 md:py-20">

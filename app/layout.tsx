@@ -16,32 +16,32 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hh-goa-2026-pfp.vercel.app"),
-  title: "HH Goa 2026 PFP Generator",
+  title: "HH Goa 2026 PFP & Builder ID Generator",
   description:
-    "Create your Hacker House Goa 2026 profile picture and share your builder identity. Upload a photo, get a branded PFP in seconds.",
+    "Create your Hacker House Goa 2026 PFP, Builder ID, or Team frame. One generator, three modes. Instant PNG. Share to X with #FrameInGoa.",
   keywords: [
     "Hacker House Goa",
     "HH Goa 2026",
     "PFP",
-    "frame",
-    "builder",
-    "developer",
+    "Builder ID",
+    "Team frame",
+    "FrameInGoa",
     "FrameGoa",
   ],
   authors: [{ name: "Hacker House Goa 2026" }],
   openGraph: {
-    title: "HH Goa 2026 PFP Generator",
+    title: "HH Goa 2026 PFP & Builder ID Generator",
     description:
-      "Create your Hacker House Goa 2026 profile picture. Upload → Frame → Share.",
+      "Create your HH Goa 2026 PFP, Builder ID, or Team frame. Upload → Generate → Share.",
     type: "website",
     locale: "en_US",
-    siteName: "HH Goa 2026 PFP",
+    siteName: "HH Goa 2026",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HH Goa 2026 PFP Generator",
+    title: "HH Goa 2026 PFP & Builder ID Generator",
     description:
-      "Create your Hacker House Goa 2026 profile picture. Upload → Frame → Share.",
+      "Create your HH Goa 2026 PFP, Builder ID, or Team frame. Upload → Generate → Share.",
   },
   robots: {
     index: true,

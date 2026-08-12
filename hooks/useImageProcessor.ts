@@ -13,12 +13,19 @@ export function useImageProcessor() {
   const [state, setState] = useState<ImageState>("empty");
   const [error, setError] = useState<string | null>(null);
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
-  const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [position, setPosition] = useState<ImagePosition>(DEFAULT_POSITION);
   const [result, setResult] = useState<GeneratedResult | null>(null);
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
 
   const objectUrlsRef = useRef<Set<string>>(new Set());
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const trackUrl = useCallback((url: string) => {
     if (url && url.startsWith("blob:")) {
@@ -31,32 +38,33 @@ export function useImageProcessor() {
       try {
         URL.revokeObjectURL(url);
       } catch {
-        // ignore
+        // Already revoked
       }
     });
     objectUrlsRef.current.clear();
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => revokeAllUrls();
   }, [revokeAllUrls]);
 
+  const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
+    if (mountedRef.current) setter(value);
+  }, []);
+
   const processFile = useCallback(
     async (file: File) => {
-      // Clean previous state
       revokeAllUrls();
-      setError(null);
-      setResult(null);
-      setPosition(DEFAULT_POSITION);
-      setSourceImage(null);
-      setSourceFile(null);
-      setState("uploading");
+      safeSet(setError, null);
+      safeSet(setResult, null);
+      safeSet(setPosition, DEFAULT_POSITION);
+      safeSet(setSourceImage, null);
+      safeSet(setState, "uploading" as ImageState);
 
       const validation = validateFile(file);
       if (!validation.valid) {
-        setError(validation.error || "Invalid file.");
-        setState(validation.state || "error");
+        safeSet(setError, validation.error || "Invalid file.");
+        safeSet(setState, (validation.state || "error") as ImageState);
         return;
       }
 
@@ -64,61 +72,60 @@ export function useImageProcessor() {
         let processedFile = file;
 
         if (isHEICFile(file)) {
-          setState("heic-converting");
+          safeSet(setState, "heic-converting" as ImageState);
           try {
             processedFile = await convertHEICToJPEG(file);
           } catch (heicErr) {
-            setError(
+            safeSet(
+              setError,
               (heicErr as Error).message ||
                 "Could not convert HEIC. Please convert to JPG on your device first."
             );
-            setState("error");
+            safeSet(setState, "error" as ImageState);
             return;
           }
         }
 
-        setState("uploading");
+        safeSet(setState, "uploading" as ImageState);
 
         let img: HTMLImageElement;
         try {
           img = await loadImageFromFile(processedFile);
           trackUrl(img.src);
         } catch (decodeErr) {
-          setError(
+          safeSet(
+            setError,
             (decodeErr as Error).message ||
               "Could not read this image. Try a different file."
           );
-          setState("error");
+          safeSet(setState, "error" as ImageState);
           return;
         }
 
-        // Downscale monstrous phone photos to keep canvas ops fast
         try {
           const optimized = await downscaleImageIfHuge(img, 2400);
           if (optimized !== img) {
             trackUrl(optimized.src);
           }
-          setSourceImage(optimized);
+          safeSet(setSourceImage, optimized);
         } catch {
-          // If downscale fails, just use the original
-          setSourceImage(img);
+          safeSet(setSourceImage, img);
         }
 
-        setSourceFile(processedFile);
-        setState("loaded");
+        safeSet(setState, "loaded" as ImageState);
       } catch (err) {
-        setError((err as Error).message || "Failed to process image.");
-        setState("error");
+        safeSet(setError, (err as Error).message || "Failed to process image.");
+        safeSet(setState, "error" as ImageState);
       }
     },
-    [revokeAllUrls, trackUrl]
+    [revokeAllUrls, trackUrl, safeSet]
   );
 
   const generateImage = useCallback(async () => {
     if (!sourceImage) return;
 
-    setState("generating");
-    setError(null);
+    safeSet(setState, "generating" as ImageState);
+    safeSet(setError, null);
 
     try {
       const blob = await renderFramedImage({
@@ -131,32 +138,26 @@ export function useImageProcessor() {
       const objectUrl = URL.createObjectURL(blob);
       trackUrl(objectUrl);
 
-      setResult({
+      safeSet(setResult, {
         blob,
         objectUrl,
         filename: "hh-goa-2026-pfp.png",
       });
-      setState("generated");
+      safeSet(setState, "generated" as ImageState);
     } catch (err) {
-      setError((err as Error).message || "Failed to generate image.");
-      setState("error");
+      safeSet(setError, (err as Error).message || "Failed to generate image.");
+      safeSet(setState, "error" as ImageState);
     }
-  }, [sourceImage, position, frameImage, trackUrl]);
-
-  const resetToEditor = useCallback(() => {
-    setState("loaded");
-    setResult(null);
-  }, []);
+  }, [sourceImage, position, frameImage, trackUrl, safeSet]);
 
   const resetAll = useCallback(() => {
     revokeAllUrls();
-    setState("empty");
-    setError(null);
-    setSourceImage(null);
-    setSourceFile(null);
-    setPosition(DEFAULT_POSITION);
-    setResult(null);
-  }, [revokeAllUrls]);
+    safeSet(setState, "empty" as ImageState);
+    safeSet(setError, null);
+    safeSet(setSourceImage, null);
+    safeSet(setPosition, DEFAULT_POSITION);
+    safeSet(setResult, null);
+  }, [revokeAllUrls, safeSet]);
 
   const setFrameImageCallback = useCallback((img: HTMLImageElement | null) => {
     setFrameImage(img);
@@ -166,7 +167,6 @@ export function useImageProcessor() {
     state,
     error,
     sourceImage,
-    sourceFile,
     position,
     setPosition,
     result,
@@ -174,7 +174,6 @@ export function useImageProcessor() {
     setFrameImage: setFrameImageCallback,
     processFile,
     generateImage,
-    resetToEditor,
     resetAll,
   };
 }
